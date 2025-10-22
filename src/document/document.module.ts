@@ -5,17 +5,8 @@ import { PdfProcessorService } from './services/pdf-processor.service';
 import { SchemaExtractorService } from './services/schema-extractor.service';
 
 @Module({
-    imports: [StorageModule],
-    providers: [
-        PdfProcessorService,
-        DocumentDetectorService,
-        SchemaExtractorService,
-    ],
-    exports: [
-        PdfProcessorService,
-        DocumentDetectorService,
-        SchemaExtractorService,
-    ],
+  imports: [StorageModule],
+  providers: [PdfProcessorService, DocumentDetectorService, SchemaExtractorService],
+  exports: [PdfProcessorService, DocumentDetectorService, SchemaExtractorService],
 })
 export class DocumentModule {}
-

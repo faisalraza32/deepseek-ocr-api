@@ -8,10 +8,9 @@ import { ApiOcrProvider } from './providers/api-ocr.provider';
 import { LocalOcrProvider } from './providers/local-ocr.provider';
 
 @Module({
-    imports: [HttpModule, DocumentModule, StorageModule],
-    controllers: [OcrController],
-    providers: [OcrService, LocalOcrProvider, ApiOcrProvider],
-    exports: [OcrService],
+  imports: [HttpModule, DocumentModule, StorageModule],
+  controllers: [OcrController],
+  providers: [OcrService, LocalOcrProvider, ApiOcrProvider],
+  exports: [OcrService],
 })
 export class OcrModule {}
-

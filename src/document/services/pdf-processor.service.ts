@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { exec } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -11,61 +11,78 @@ const execPromise = promisify(exec);
 
 @Injectable()
 export class PdfProcessorService {
-    private readonly tempDir: string;
+  private readonly logger = new Logger(PdfProcessorService.name);
+  private readonly tempDir: string;
 
-    constructor(private readonly configService: ConfigService) {
-        this.tempDir = this.configService.get<string>('TEMP_DIR', './temp');
+  constructor(private readonly configService: ConfigService) {
+    this.tempDir = this.configService.get<string>('TEMP_DIR', './temp');
+    this.logger.log('PDF Processor Service initialized');
+  }
+
+  async convertPdfToImages(pdfPath: string): Promise<string[]> {
+    const startTime = Date.now();
+    const outputDir = path.join(this.tempDir, `pdf_${uuidv4()}`);
+
+    this.logger.debug(`Starting PDF conversion: ${path.basename(pdfPath)}`);
+
+    try {
+      // Create output directory
+      await fs.mkdir(outputDir, { recursive: true });
+      this.logger.debug(`Created output directory: ${outputDir}`);
+
+      // Use pdftoppm (from poppler-utils) to convert PDF to images
+      // Format: pdftoppm -png input.pdf output_prefix
+      const outputPrefix = path.join(outputDir, 'page');
+      const command = `pdftoppm -png "${pdfPath}" "${outputPrefix}"`;
+
+      try {
+        this.logger.debug('Attempting PDF conversion with pdftoppm...');
+        await execPromise(command);
+        this.logger.debug('PDF conversion successful with pdftoppm');
+      } catch {
+        // If pdftoppm is not available, try using ImageMagick convert as fallback
+        this.logger.warn('pdftoppm failed, trying ImageMagick as fallback...');
+        const fallbackCommand = `convert -density 300 "${pdfPath}" "${outputPrefix}-%d.png"`;
+        await execPromise(fallbackCommand);
+        this.logger.debug('PDF conversion successful with ImageMagick');
+      }
+
+      // Get all generated image files
+      const files = await fs.readdir(outputDir);
+      const imagePaths = files
+        .filter((file) => file.endsWith('.png'))
+        .sort()
+        .map((file) => path.join(outputDir, file));
+
+      if (imagePaths.length === 0) {
+        this.logger.error('PDF conversion failed: No images were generated');
+        throw new Error('No images were generated from PDF');
+      }
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `PDF conversion completed in ${duration}ms: ${imagePaths.length} page(s) generated`,
+      );
+
+      return imagePaths;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(`PDF conversion failed after ${duration}ms: ${error.message}`, error.stack);
+
+      // Clean up on error
+      if (existsSync(outputDir)) {
+        await fs.rm(outputDir, { recursive: true, force: true });
+      }
+      throw new InternalServerErrorException(`Failed to convert PDF to images: ${error.message}`);
     }
+  }
 
-    async convertPdfToImages(pdfPath: string): Promise<string[]> {
-        const outputDir = path.join(
-            this.tempDir,
-            `pdf_${uuidv4()}`,
-        );
-
-        try {
-            // Create output directory
-            await fs.mkdir(outputDir, { recursive: true });
-
-            // Use pdftoppm (from poppler-utils) to convert PDF to images
-            // Format: pdftoppm -png input.pdf output_prefix
-            const outputPrefix = path.join(outputDir, 'page');
-            const command = `pdftoppm -png "${pdfPath}" "${outputPrefix}"`;
-
-            try {
-                await execPromise(command);
-            } catch {
-                // If pdftoppm is not available, try using ImageMagick convert as fallback
-                const fallbackCommand = `convert -density 300 "${pdfPath}" "${outputPrefix}-%d.png"`;
-                await execPromise(fallbackCommand);
-            }
-
-            // Get all generated image files
-            const files = await fs.readdir(outputDir);
-            const imagePaths = files
-                .filter((file) => file.endsWith('.png'))
-                .sort()
-                .map((file) => path.join(outputDir, file));
-
-            if (imagePaths.length === 0) {
-                throw new Error('No images were generated from PDF');
-            }
-
-            return imagePaths;
-        } catch (error) {
-            // Clean up on error
-            if (existsSync(outputDir)) {
-                await fs.rm(outputDir, { recursive: true, force: true });
-            }
-            throw new InternalServerErrorException(
-                `Failed to convert PDF to images: ${error.message}`,
-            );
-        }
-    }
-
-    async isPdf(filePath: string): Promise<boolean> {
-        const extension = path.extname(filePath).toLowerCase();
-        return extension === '.pdf';
-    }
+  async isPdf(filePath: string): Promise<boolean> {
+    const extension = path.extname(filePath).toLowerCase();
+    const isPdf = extension === '.pdf';
+    this.logger.debug(
+      `File type check: ${path.basename(filePath)} is ${isPdf ? 'PDF' : 'not PDF'}`,
+    );
+    return isPdf;
+  }
 }
-

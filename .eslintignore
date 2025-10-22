@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+coverage
+
+# Configuration files
+.eslintrc.js
+jest.config.js
+nest-cli.json
+
+# Temp files
+temp
+tmp
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
