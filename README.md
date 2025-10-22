@@ -28,6 +28,9 @@ A powerful NestJS-based API for extracting structured data from documents and im
 - [Supported Document Types](#supported-document-types)
 - [Development](#development)
 - [Testing](#testing)
+  - [Test Coverage](#test-coverage)
+  - [Running Tests](#running-tests)
+- [Contributing](#contributing)
 
 ## Prerequisites
 
@@ -481,15 +484,54 @@ npm run lint
 
 ## Testing
 
+This project has comprehensive unit test coverage with **87.67% code coverage** and **77 passing tests**.
+
+### Test Coverage
+
+| Metric     | Coverage | Status |
+| ---------- | -------- | ------ |
+| Statements | 87.67%   | ✅     |
+| Branches   | 72.72%   | ✅     |
+| Functions  | 77.63%   | ✅     |
+| Lines      | 87.45%   | ✅     |
+
+See [TEST_COVERAGE.md](./TEST_COVERAGE.md) for detailed coverage report.
+
+### Running Tests
+
 ```bash
-# Unit tests
+# Run all unit tests
 npm run test
 
-# E2E tests
-npm run test:e2e
-
-# Test coverage
+# Run tests with coverage report
 npm run test:cov
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run specific test file
+npm test -- ocr.controller.spec
+```
+
+### Test Files
+
+- ✅ `ocr.controller.spec.ts` - Controller endpoint tests
+- ✅ `ocr.service.spec.ts` - Business logic tests
+- ✅ `storage.service.spec.ts` - File storage tests
+- ✅ `document-detector.service.spec.ts` - Document type detection tests
+- ✅ `pdf-processor.service.spec.ts` - PDF processing tests
+- ✅ `schema-extractor.service.spec.ts` - Schema extraction tests
+- ✅ `http-exception.filter.spec.ts` - Error handling tests
+- ✅ `logging.interceptor.spec.ts` - Logging tests
+
+**Total: 77 tests across 8 test suites**
+
+### Coverage Report
+
+After running `npm run test:cov`, view the HTML coverage report:
+
+```bash
+open coverage/lcov-report/index.html
 ```
 
 ## Troubleshooting
