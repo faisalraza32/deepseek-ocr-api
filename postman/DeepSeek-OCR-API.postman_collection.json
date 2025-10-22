@@ -1,0 +1,566 @@
+{
+  "info": {
+    "name": "DeepSeek-OCR API",
+    "description": "Extract structured data from documents and images (invoices, receipts, forms, tables) using DeepSeek-OCR",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "OCR",
+      "item": [
+        {
+          "name": "Extract Single Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has required fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('filename');",
+                  "    pm.expect(jsonData).to.have.property('documentType');",
+                  "    pm.expect(jsonData).to.have.property('confidence');",
+                  "    pm.expect(jsonData).to.have.property('schema');",
+                  "    pm.expect(jsonData).to.have.property('rawText');",
+                  "});",
+                  "",
+                  "pm.test(\"Confidence is between 0 and 1\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.confidence).to.be.at.least(0);",
+                  "    pm.expect(jsonData.confidence).to.be.at.most(1);",
+                  "});",
+                  "",
+                  "pm.test(\"Document type is valid\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var validTypes = ['invoice', 'receipt', 'form', 'table', 'unknown'];",
+                  "    pm.expect(validTypes).to.include(jsonData.documentType);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Image or PDF file to process"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ocr/extract",
+              "host": ["{{baseUrl}}"],
+              "path": ["ocr", "extract"]
+            },
+            "description": "Upload a single document (image or PDF) to extract structured data. The API will automatically detect the document type and return the appropriate schema."
+          },
+          "response": [
+            {
+              "name": "Success - Invoice",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": []
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/ocr/extract",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["ocr", "extract"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"filename\": \"invoice.pdf\",\n  \"documentType\": \"invoice\",\n  \"confidence\": 0.95,\n  \"schema\": {\n    \"vendor\": \"Acme Corporation\",\n    \"invoiceNumber\": \"INV-2024-001\",\n    \"date\": \"2024-01-15\",\n    \"dueDate\": \"2024-02-15\",\n    \"items\": [\n      {\n        \"description\": \"Product A\",\n        \"quantity\": 2,\n        \"unitPrice\": 50,\n        \"total\": 100\n      }\n    ],\n    \"subtotal\": 100,\n    \"tax\": 10,\n    \"total\": 110,\n    \"currency\": \"USD\"\n  },\n  \"rawText\": \"ACME CORPORATION\\nInvoice #INV-2024-001...\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Extract Single Document with Type Hint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Document type matches hint\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.documentType).to.eql(pm.request.url.query.get('documentType'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Image or PDF file to process"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ocr/extract?documentType=invoice",
+              "host": ["{{baseUrl}}"],
+              "path": ["ocr", "extract"],
+              "query": [
+                {
+                  "key": "documentType",
+                  "value": "invoice",
+                  "description": "Optional document type hint (invoice, receipt, form, table)"
+                }
+              ]
+            },
+            "description": "Extract data with a document type hint to improve accuracy"
+          },
+          "response": []
+        },
+        {
+          "name": "Extract Batch Documents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has batch fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('results');",
+                  "    pm.expect(jsonData).to.have.property('totalProcessed');",
+                  "    pm.expect(jsonData).to.have.property('successful');",
+                  "    pm.expect(jsonData).to.have.property('failed');",
+                  "});",
+                  "",
+                  "pm.test(\"Results array is not empty\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.results).to.be.an('array');",
+                  "    pm.expect(jsonData.results.length).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test(\"Total processed equals successful + failed\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.totalProcessed).to.equal(jsonData.successful + jsonData.failed);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": [],
+                  "description": "Multiple files to process (max 10)"
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": [],
+                  "description": "Second file"
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": [],
+                  "description": "Third file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ocr/extract/batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["ocr", "extract", "batch"]
+            },
+            "description": "Upload multiple documents (up to 10) for batch processing. Each file will be processed independently."
+          },
+          "response": [
+            {
+              "name": "Success - Batch",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "files",
+                      "type": "file",
+                      "src": []
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/ocr/extract/batch",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["ocr", "extract", "batch"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"results\": [\n    {\n      \"filename\": \"invoice1.pdf\",\n      \"documentType\": \"invoice\",\n      \"confidence\": 0.95,\n      \"schema\": {},\n      \"rawText\": \"...\"\n    },\n    {\n      \"filename\": \"receipt1.jpg\",\n      \"documentType\": \"receipt\",\n      \"confidence\": 0.92,\n      \"schema\": {},\n      \"rawText\": \"...\"\n    }\n  ],\n  \"totalProcessed\": 2,\n  \"successful\": 2,\n  \"failed\": 0\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Supported Formats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has required fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('supportedFileTypes');",
+                  "    pm.expect(jsonData).to.have.property('supportedDocumentTypes');",
+                  "    pm.expect(jsonData).to.have.property('maxFileSizeMB');",
+                  "    pm.expect(jsonData).to.have.property('exampleSchemas');",
+                  "});",
+                  "",
+                  "pm.test(\"Supported file types include common formats\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.supportedFileTypes).to.include('pdf');",
+                  "    pm.expect(jsonData.supportedFileTypes).to.include('jpg');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ocr/supported-formats",
+              "host": ["{{baseUrl}}"],
+              "path": ["ocr", "supported-formats"]
+            },
+            "description": "Get information about supported file types, document types, and example schemas"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/ocr/supported-formats",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["ocr", "supported-formats"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"supportedFileTypes\": [\"jpg\", \"jpeg\", \"png\", \"pdf\"],\n  \"supportedDocumentTypes\": [\"invoice\", \"receipt\", \"form\", \"table\"],\n  \"maxFileSizeMB\": 10,\n  \"exampleSchemas\": {\n    \"invoice\": {\n      \"vendor\": \"Acme Corporation\",\n      \"invoiceNumber\": \"INV-2024-001\",\n      \"date\": \"2024-01-15\",\n      \"items\": [],\n      \"total\": 100\n    },\n    \"receipt\": {\n      \"merchant\": \"Corner Store\",\n      \"date\": \"2024-01-15\",\n      \"items\": [],\n      \"total\": 3.5\n    },\n    \"form\": {\n      \"fields\": {\n        \"firstName\": \"John\",\n        \"lastName\": \"Doe\"\n      }\n    },\n    \"table\": {\n      \"headers\": [\"Name\", \"Age\", \"City\"],\n      \"rows\": [[\"John Doe\", \"30\", \"New York\"]]\n    }\n  }\n}"
+            }
+          ]
+        }
+      ],
+      "description": "OCR extraction endpoints for processing documents and images"
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Service status is ok or degraded\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(['ok', 'degraded', 'error']).to.include(jsonData.status);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has required fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "    pm.expect(jsonData).to.have.property('ocrMode');",
+                  "    pm.expect(jsonData).to.have.property('modelAvailable');",
+                  "    pm.expect(jsonData).to.have.property('timestamp');",
+                  "});",
+                  "",
+                  "pm.test(\"Timestamp is valid ISO format\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var date = new Date(jsonData.timestamp);",
+                  "    pm.expect(date.toISOString()).to.eql(jsonData.timestamp);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ocr/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["ocr", "health"]
+            },
+            "description": "Check the health status of the OCR service and model availability"
+          },
+          "response": [
+            {
+              "name": "Healthy",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/ocr/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["ocr", "health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"ok\",\n  \"ocrMode\": \"local\",\n  \"modelAvailable\": true,\n  \"timestamp\": \"2024-01-15T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Degraded",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/ocr/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["ocr", "health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"degraded\",\n  \"ocrMode\": \"local\",\n  \"modelAvailable\": false,\n  \"timestamp\": \"2024-01-15T10:30:00.000Z\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Health check endpoints"
+    },
+    {
+      "name": "Error Examples",
+      "item": [
+        {
+          "name": "No File Uploaded",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ocr/extract",
+              "host": ["{{baseUrl}}"],
+              "path": ["ocr", "extract"]
+            },
+            "description": "Example of error when no file is uploaded"
+          },
+          "response": [
+            {
+              "name": "Bad Request",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": []
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/ocr/extract",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["ocr", "extract"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"error\": \"Bad Request\",\n  \"message\": \"No file uploaded\",\n  \"timestamp\": \"2024-01-15T10:30:00.000Z\",\n  \"path\": \"/ocr/extract\",\n  \"requestId\": \"1234567890-abc123\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Invalid File Type",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Upload an unsupported file type (e.g., .txt, .doc)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ocr/extract",
+              "host": ["{{baseUrl}}"],
+              "path": ["ocr", "extract"]
+            },
+            "description": "Example of error when uploading an unsupported file type"
+          },
+          "response": [
+            {
+              "name": "Bad Request",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": []
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/ocr/extract",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["ocr", "extract"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"error\": \"Bad Request\",\n  \"message\": \"File type .txt is not allowed. Allowed types: jpg, jpeg, png, pdf\",\n  \"timestamp\": \"2024-01-15T10:30:00.000Z\",\n  \"path\": \"/ocr/extract\",\n  \"requestId\": \"1234567890-abc123\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Examples of error responses"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('Request to:', pm.request.url.toString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test(\"Response time is less than 30 seconds\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(30000);",
+          "});",
+          "",
+          "pm.test(\"Content-Type is application/json\", function () {",
+          "    pm.response.to.have.header(\"Content-Type\");",
+          "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+          "});"
+        ]
+      }
+    }
+  ]
+}

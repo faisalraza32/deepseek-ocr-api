@@ -21,6 +21,10 @@ A powerful NestJS-based API for extracting structured data from documents and im
 - [Running the Application](#running-the-application)
 - [API Endpoints](#api-endpoints)
 - [Usage Examples](#usage-examples)
+  - [Postman Collection](#postman-collection-)
+  - [JavaScript/TypeScript](#javascripttypescript-using-fetch)
+  - [cURL Examples](#curl)
+  - [Python Example](#python)
 - [Supported Document Types](#supported-document-types)
 - [Development](#development)
 - [Testing](#testing)
@@ -28,15 +32,18 @@ A powerful NestJS-based API for extracting structured data from documents and im
 ## Prerequisites
 
 ### Required
+
 - **Node.js** (v18 or higher)
 - **npm** or **yarn**
 
 ### Optional (for local model mode)
+
 - **Python** 3.12.9 or higher
 - **PyTorch** with CUDA support (for GPU acceleration)
 - **DeepSeek-OCR** model dependencies
 
 ### System Dependencies (for PDF processing)
+
 - **poppler-utils** (for pdftoppm)
   - Ubuntu/Debian: `sudo apt-get install poppler-utils`
   - macOS: `brew install poppler`
@@ -45,12 +52,14 @@ A powerful NestJS-based API for extracting structured data from documents and im
 ## Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone <repository-url>
 cd deekseek
 ```
 
 2. **Install Node.js dependencies**
+
 ```bash
 npm install
 # or
@@ -58,6 +67,7 @@ yarn install
 ```
 
 3. **Setup environment variables**
+
 ```bash
 cp .env.example .env
 ```
@@ -115,6 +125,7 @@ DEEPSEEK_MODEL_PATH=deepseek-ai/DeepSeek-OCR
 ## Running the Application
 
 ### Development Mode
+
 ```bash
 npm run start:dev
 # or
@@ -122,6 +133,7 @@ yarn start:dev
 ```
 
 ### Production Mode
+
 ```bash
 # Build the application
 npm run build
@@ -131,12 +143,14 @@ npm run start:prod
 ```
 
 ### Using Docker (Optional)
+
 ```bash
 docker build -t deepseek-ocr-api .
 docker run -p 3000:3000 --env-file .env deepseek-ocr-api
 ```
 
 The API will be available at:
+
 - **Base URL**: `http://localhost:3000`
 - **Swagger UI**: `http://localhost:3000/api/docs`
 - **Swagger JSON**: `http://localhost:3000/api/docs-json`
@@ -144,20 +158,24 @@ The API will be available at:
 ## API Endpoints
 
 ### 1. Extract from Single Document
+
 **POST** `/ocr/extract`
 
 Upload a single image or PDF to extract structured data.
 
 **Query Parameters:**
+
 - `documentType` (optional): Hint about document type (`invoice`, `receipt`, `form`, `table`)
 
 **Request:**
+
 ```bash
 curl -X POST http://localhost:3000/ocr/extract \
   -F "file=@/path/to/document.pdf"
 ```
 
 **Response:**
+
 ```json
 {
   "filename": "invoice.pdf",
@@ -185,11 +203,13 @@ curl -X POST http://localhost:3000/ocr/extract \
 ```
 
 ### 2. Batch Extract from Multiple Documents
+
 **POST** `/ocr/extract/batch`
 
 Upload multiple files for batch processing.
 
 **Request:**
+
 ```bash
 curl -X POST http://localhost:3000/ocr/extract/batch \
   -F "files=@/path/to/doc1.pdf" \
@@ -197,6 +217,7 @@ curl -X POST http://localhost:3000/ocr/extract/batch \
 ```
 
 **Response:**
+
 ```json
 {
   "results": [
@@ -210,11 +231,13 @@ curl -X POST http://localhost:3000/ocr/extract/batch \
 ```
 
 ### 3. Health Check
+
 **GET** `/ocr/health`
 
 Check service status and model availability.
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -225,11 +248,13 @@ Check service status and model availability.
 ```
 
 ### 4. Supported Formats
+
 **GET** `/ocr/supported-formats`
 
 Get information about supported formats and example schemas.
 
 **Response:**
+
 ```json
 {
   "supportedFileTypes": ["jpg", "jpeg", "png", "pdf"],
@@ -240,6 +265,24 @@ Get information about supported formats and example schemas.
 ```
 
 ## Usage Examples
+
+### Postman Collection 📮
+
+A complete Postman collection is available in the `/postman` directory with:
+
+- All API endpoints with examples
+- Automated tests for each request
+- Environment configurations (Local & Production)
+- Error handling examples
+
+**Quick Start:**
+
+1. Import `postman/DeepSeek-OCR-API.postman_collection.json` into Postman
+2. Import `postman/Local.postman_environment.json` for local testing
+3. Select "Local Development" environment
+4. Start testing!
+
+See [postman/README.md](./postman/README.md) for detailed instructions.
 
 ### JavaScript/TypeScript (using fetch)
 
@@ -318,9 +361,11 @@ curl http://localhost:3000/ocr/supported-formats
 ## Supported Document Types
 
 ### 1. Invoice
+
 Extracts vendor information, line items, totals, tax, and dates.
 
 **Schema:**
+
 ```typescript
 {
   vendor: string;
@@ -341,9 +386,11 @@ Extracts vendor information, line items, totals, tax, and dates.
 ```
 
 ### 2. Receipt
+
 Extracts merchant, transaction details, and purchased items.
 
 **Schema:**
+
 ```typescript
 {
   merchant: string;
@@ -360,9 +407,11 @@ Extracts merchant, transaction details, and purchased items.
 ```
 
 ### 3. Form
+
 Extracts field-value pairs from forms.
 
 **Schema:**
+
 ```typescript
 {
   fields: Record<string, string>;
@@ -370,9 +419,11 @@ Extracts field-value pairs from forms.
 ```
 
 ### 4. Table
+
 Extracts structured table data with headers and rows.
 
 **Schema:**
+
 ```typescript
 {
   headers: string[];
@@ -383,6 +434,7 @@ Extracts structured table data with headers and rows.
 ## Development
 
 ### Project Structure
+
 ```
 deekseek/
 ├── src/
@@ -407,6 +459,7 @@ deekseek/
 ```
 
 ### Available Scripts
+
 ```bash
 # Development
 npm run start:dev
@@ -471,4 +524,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## Support
 
 For issues and questions, please open an issue on GitHub.
-
